@@ -1,0 +1,112 @@
+  G++
+    Features
+     * Files can be named anything
+     * Multiple Classes can be defined in a file
+     * All classes extend Base implicitly
+     * Can extend class Service, to be included in built in Dependency Injection.
+       * Each class will be instantiated once.
+       * Any attempt to "new" a service will generate a warning (error?)
+       * Object Parameters will be assumed to be other services, and searched for
+       * basic type or String parameters are assumed to be constant properties, and will be loaded from a special implicitly defined service.
+     * All methods are assumed to be static, until they attempt to access a field. It is not explicitly defined.
+       * Special case for new()?
+     * memory is managed by reference counting.
+     * support exception throwing.
+     * Multiple inharentance.
+     * Abstract methods are allowed at any time, simply put no body.
+
+    Syntax
+      [File]:
+        [Package]
+        Class [Class] ( '<' [TypeReference] '>' )? [Extends [Class] (,[Class])* ]* {   //implied following Base
+          ( [Field] || [Method] )*
+        }
+
+      [Field]:
+        [Type] [Name] = [Value]; //fields MUST be initialized;
+
+      [Method]:
+        [Type] [Name]'(' ( [Type] [Name] )* ')' (';' || '{'
+          ([Expression];)+
+        '}')
+
+      [Expression]:
+        [Name] = [Expression] ||
+        [Constant] ||
+        [MethodCall] ||
+        [Expression] [BinaryOperator] [Expression] ||
+        [UnaryOperator] [Expression] ||
+        '(' [Expression] ')'
+
+      Type:
+        [Class] || "int" || "float" || [Type]( '[' [Int] ']' )+ || [TypeReference]
+
+      TypeReference:
+        [Name]
+
+      UnaryOperator:
+        "-"
+        "=" [BinaryOperator]
+
+      BinaryOperator:
+        "^"
+        "*"
+        "/"
+        "%"
+        "+"
+        "-"
+        "&&"  //boolean operations
+        "||"
+        "!!"
+        "&"   //bit operations
+        "|"
+        "!"
+        "<<"
+        ">>"
+
+    class Base {
+      new();      //Explicitly create a new instance, maybe should be considered an operator?
+      delete();   //Sets this reference to null, may delete object
+      hashCode(); //Uses reflection to recursively call all fields.
+      equals(); //Safety checks, and then compares hashcodes
+      toString(); //Uses reflection to generate a json like block
+      class(); //Returns the class object that represents this object.
+    }
+
+    Starting Point
+      Main.main(args))
+
+    Library
+      Base
+        String
+        Pointer
+      Reflection
+        Class
+        Field
+        Method
+      Testing
+        Mock
+        Assert
+      DataTypes
+        List
+        ArrayList
+        LinkedList
+        Map
+        HashMap
+        TreeMap
+        Tree
+        BinaryTree
+        BalancedTree
+      Math
+      Graphics
+        DrawLine
+        DrawTriangle
+        Clip
+        Blit
+      Text
+        Trie
+        Distance() // https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance
+      Binary
+        BitArray
+        HuffmanEncode // https://en.wikipedia.org/wiki/Huffman_coding
+

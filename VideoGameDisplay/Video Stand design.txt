@@ -1,0 +1,45 @@
+Video Display Project
+               _______
+              / VESA  \         VESA mount includes cross beam, so it can be
+              \ Mount /           screwed into studs, as well as swing arm.
+                 | |
+                 | |            Virtical Beam, 4" wide, 2" deep with cavity to
+                 | |              hide cables.
+        =====================
+                 | |
+        =====================   Accessory rails, with space behind to hide
+                 | |              cables, but still allow easy access
+        =====================
+                 | |
+                 | |
+              ==Foot===         Foot extends forward, so the whole unit can
+                                lean on the wall
+                                            ___  ___
+  Accessory rails made three layers of      | |__| |  /|\
+  wood, perhaps 1/2" ply. Middle layer      | |  | |   |   /|\
+  will be shorter than the other two. This  | |  | |   3"   2"
+  will allow for cable management by laying |_|__|_|  \|/  \|/
+  the wire in the middle trough.
+
+  Accessories should be some simple fraction of the total length of the
+  accessory rail, perhaps 1/4th, 1/6th, or 1/8th. Accessories include a drawer
+  for unsightly accessories, a shelf (perhaps multiple width units) for actual
+  games to display and a slanted display shelf for the consoles, with a hidden
+  space for power bricks.
+
+  ⇐============================12"================================⇒
+                                                         ⇐=3"=====⇒
+                                                         ___________
+                                              __________/◯P.Hinge   |   /|\
+                                   __________/                 __   |    |
+                        __________/                           |  |__|    |
+   _         __________/                                      |          6"
+  | |_______/                                                 |          |
+  |===BVS===                                                  |          |
+  |___________________________________________________________|         \|/
+
+  Lip is a piece of quarter round
+
+BSV Logic
+
+  Input

@@ -1,0 +1,81 @@
+[indentation]
+indent_width=2
+indent_type=0
+indent_hard_tab_width=2
+detect_indent=false
+indent_mode=3
+detect_indent_width=false
+
+[project]
+name=GLib
+base_path=../../
+description=
+make_in_base_path=true
+run_cmd=gpp
+file_patterns=
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=1
+FILE_NAME_0=1408;None;0;EUTF-8;0;1;0;%2Fmedia%2Fgrant%2FCE92-6F92%2FDocuments%2FSoftwareProjects%2FGComp%2FGPP%2Fproj%2Fgeany%2FGPP.geany;0;2
+FILE_NAME_1=173;C++;0;EUTF-8;0;1;0;%2Fmedia%2Fgrant%2FCE92-6F92%2FDocuments%2FSoftwareProjects%2FGComp%2FGPP%2Fsrc%2FGPP.cpp;0;2
+FILE_NAME_2=110;C++;0;EUTF-8;0;1;0;%2Fmedia%2Fgrant%2FCE92-6F92%2FDocuments%2FSoftwareProjects%2FGComp%2FGPP%2Finclude%2FParser%2FParser.hpp;0;2
+FILE_NAME_3=143;C++;0;EUTF-8;0;1;0;%2Fmedia%2Fgrant%2FCE92-6F92%2FDocuments%2FSoftwareProjects%2FGComp%2FGPP%2Finclude%2FParser%2FTOs%2FClass.hpp;0;2
+
+[build-menu]
+NF_00_LB=_Make
+NF_00_CM=make clean;make
+NF_00_WD=%p
+NF_01_LB=Make Custom _Target
+NF_01_CM=make
+NF_01_WD=%p
+NF_02_LB=Make _Clean
+NF_02_CM=make clean
+NF_02_WD=%p
+NF_03_LB=Make Format
+NF_03_CM=make format
+NF_03_WD=%p
+EX_00_LB=_Execute
+EX_00_CM="./gpp" ./doc/HelloWorld/HelloWorld.gpp
+EX_00_WD=%p
+EX_01_LB=Debug
+EX_01_CM=valgrind  -v --leak-check=full "./gpp" ./doc/HelloWorld/HelloWorld.gpp
+EX_01_WD=%p
+C++FT_00_LB=
+C++FT_00_CM=
+C++FT_00_WD=
+C++FT_01_LB=
+C++FT_01_CM=
+C++FT_01_WD=
+filetypes=C++;C;
+CFT_00_LB=_Compile
+CFT_00_CM=make
+CFT_00_WD=%p
+CFT_01_LB=Re_Build
+CFT_01_CM=make clean;make
+CFT_01_WD=%p
+
+[VTE]
+last_dir=/home/grant
+
+[debugger]
+target=/home/grant/Documents/GLib/GLib
+debugger=GDB
+arguments=
+envvar_count=0
+watches_count=0
+breaks_count=0
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=true
+strip_trailing_spaces=true
+replace_tabs=true
+
+[editor]
+line_wrapping=false
+line_break_column=72
+auto_continue_multiline=true

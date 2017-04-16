@@ -1,0 +1,7 @@
+#
+# Basic Hello World Program
+#
+
+HelloWorld:   Buffer  "Hello World.\n"    # Load the buffer 
+              IOCpy   HelloWorld          # Send the buffer to stdout
+              End                         # End the program

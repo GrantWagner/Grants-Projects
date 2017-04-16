@@ -1,0 +1,87 @@
+General Settings:
+
+  Assebly Programs are plain text files. By convention, they have the file 
+  extension "gca". Each file is assembled in two passes. The first 
+  processes the file includes, removes all the comments and extrenus white 
+  space, and catalogs all the labels. The second pass converts the 
+  symbolic forms to an actual program.
+
+General Assembly Syntax:
+
+  @include<filename>
+  #Comment
+  (Label:) (OpSym) (P1,)(P2) #Comment
+  
+  Each instruction occupies one whole line, with a each line seperated by 
+  the '\n' character. A line can be effectively empty. A comment starts 
+  with the '#' character, and continues until the end of the line. Such 
+  comments are completely ignored by the assembler.
+
+  Each token in the code is seperated by one or more whitespace characters, 
+  as defined in the set [ \t].
+
+  An identifier consists of a collection of characters from the set 
+  [a-zA-Z0-9_.]. The must start with a character in the set [a-zA-Z]. They 
+  are considered case sensitive for indentification.
+
+  A number is defined as a string of characters from the set [0-9], which 
+  may be proceded by a '-' character.
+
+  The label token is optional, it consists of any valid identifier, 
+  followed by a ':' character. Each label must be unique. Declaring two 
+  lines with  the same label is an assembler error.
+
+  The OpSym token is a case sensitive string selected from a list 
+  consisting of all the instructions listed in the processor spec. A few 
+  additional commands are described in the second below.
+
+  The P1 parameter is optional. It consists of a number and will always be 
+  followed by a ',' character. It effectively is 0 if missing. 
+
+  The P2 parameter is required, and consists of either an identifier or a 
+  number.
+
+  Finally, the special include command line consists of the string 
+  "@include<", some text, and the character '>'. All text between the two 
+  snippets is considered a filename. The file is loaded and inserted at 
+  this point as if someone just copied and pasted it's contents in place, 
+  with the following special considerations. A file can only be included 
+  once. Any repeated includes (such as a circular dependancy) are simply 
+  ignored. Any label contained in an included file should be prefixed by 
+  the filename and the '/' character when referenced by an external file. 
+  For example:
+
+    #File a.gca
+    lableOne: Rtn
+
+    #File b.gca
+    Jmp a\labelOne
+
+Extra Instructions:
+  The following instructions are on top of the list from the instruction 
+  set in the Processor Spec. While these don't translate into true 
+  instructions, they add sections of memory to use.
+  
+  Equal
+  This instruction does not translate into any value in the assembled 
+  programing. A label is required for this instruction, and that label 
+  is set equal to P2.
+  
+  Const
+  A one word space is left in the program and initialized to P2. While 
+  not necessaryly required, a label is highly recommended.
+  
+  Buffer <number|string>
+  A section of memory is set aside just after the Halt command inserted 
+  by the End instruction. If the parameter is a string, that section is 
+  as large as is necessary to store that string. If the parameter is a 
+  number or an identifier, the section of memory is that number of bytes 
+  long. While not necessaryly required, a label is highly recommended.
+
+  End
+  This value marks the end of an assembly application. It is directly 
+  replaced by a Halt command. If it contains a label, that label points to 
+  the last used two words of the application and can be used as the basis 
+  for dynamic memory allocation.
+
+  

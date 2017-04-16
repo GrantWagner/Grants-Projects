@@ -1,0 +1,327 @@
+Processor Spec
+
+  32 bit words
+  2 word instructions
+  2s compliment negative representation
+  1GB ram, max of 4GB (32 bit addressing)
+  Little Endian, both bit and byte
+    LSB   MSB LSB   MSB LSB   MSB LSB   MSB
+    |B1------||B2------||B3------||B4------|
+    |W1------------------------------------|
+  
+  Character Set
+    Key Scan codes mimmic SDL key scan codes
+
+  Registers
+    2 word accumulator, individually addressable as
+      A, B, AB
+    1 word jump register
+      J
+    1 Program Counter, not directly addressable.
+    Indiviually addressable bits:
+      GreaterThan
+      EqualThan
+      LessThan
+    
+  Device Support
+	Hardware Definition in byte 0xFF FF FF FC, the last full word
+		byte 0xFF FF FF FF: device count
+		byte 0xFF FF FF FC-E: nothing yet
+	
+	Counting down, each device has a block of memory assigned
+	Block starts with a well defined double word header
+		offset byte: device type
+		offset-1,2,3: Device Specifc Bytes. refered to as BS1-3
+		offset-4,5,6,7: a full word for the length of the mapped memory, including these two words
+
+	Devices are one way, always
+	Standard Output is garonteed, and always the first device, and id 1
+	Standard Input is garonteed, and always the second device, and id 2
+	
+    Device Definitions
+    Standard Input:
+      Device ID: 1
+	  BS1: Input/Output, Status and command
+		0bxxxx 0000 = input, ready
+		0bxxxx 0001 = input, working
+		0b0001 0000 = flip buffers
+	  BS2,3: Output length
+	  Length: 512 + 2
+	  Followed by a double buffered 512 byte buffer.
+      Presence expected
+
+	  When 0b0000 0001 is written to BS1: 
+	   * the buffer is swapped, 
+	   * status is set to working
+	   * the length bytes are recorded and set to 0
+	   * at this point, the length number of bytes will be output to hardware. When done, the status will be set to 0b0000 0000
+
+    Standard Output:
+      Device ID: 2
+	  BS1: Input/Output, Status and command
+		0bxxxx 0000 = input, no data
+		0bxxxx 0001 = input, data available
+		0bxxxx 0010 = input, buffer full
+		0b0001 0000 = flip buffers
+	  BS2,3: Output length
+	  Length: 512 + 2
+	  Followed by a double buffered 512 byte buffer.
+      Presence expected
+
+	  When 0b0001 0000 is written to BS1: 
+	   * the buffer is swapped
+	   * status is set to working
+	   * the length bytes are set to the number of active bytes in the buffer
+	   * at this point, the offline length is 0, and increments for each byte that comes in from the hardware.
+	   * if a total of 512 bytes are read from hardware, status is set to 0b0000 0010 and no further input is consumed.
+	   
+  Software Supported Memory Mapped IO
+    FrameBuffer
+    Audio DAC
+    Network Buffers (Two devices?)
+
+Operations
+  Instruction Format
+    Instruction: 8bits, P1 24bits, P2 32bits
+    Unless otherwise mentioned, the program counter incrimented by two,
+    and all other registers are left untouched.
+
+  Basic Operations
+    Halt
+      Ins: 0, P1: n/a, P2: n/a
+
+  Load and Store operations
+    LoadA
+      Ins: 4, P1: offset, P2: address
+      The value in the address pointed to by P2 + P1, is stored in register A.
+
+    LoadB
+      Ins: 5, P1: offset, P2: address
+      The value in the address pointed to by P2 + P1, is stored in register B.
+
+    LoadJ
+      Ins: 6, P1: offset, P2: address
+      The value in the address pointed to by P2 + P1, is stored in register J.
+
+    StoreA
+      Ins: 8, P1: offset, P2: address
+      The value in register A is stored in the address pointed to by P2 + P1.
+
+    StoreB
+      Ins: 9, P1: offset, P2: address
+      The value in register B is stored in the address pointed to by P2 + P1.
+
+    StoreJ
+      Ins: 10, P1: offset, P2: address
+      The value in register J is stored in the address pointed to by P2 + P1.
+
+  Basic Math Operations
+    AddMA
+      Ins: 16, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is added to the value
+      in registerA, the result in placed in A. An overflow will still
+      store the 32 least significant bits in A, and the GT bit will be
+      set.
+
+    AddVA
+      Ins: 17, P1: n/a, P2: value
+      The value stored in P2 is added to the value in registerA, the
+      result in placed in A. An overflow will still store the 32 least
+      significant bits in A, and the GT bit will be set.
+
+    SubMA
+      Ins: 18, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is subtracted to the
+      value in registerA, the result in placed in A. An underflow will
+      still store the 32 least significant bits in A, and the LT bit
+      will be set.
+
+    SubVA
+      Ins: 19, P1: n/a, P2: value
+      The value stored in P2 is subtracted from the value in register A,
+      The result in placed in A. An underflow will still store the 32
+      least significant bits in A, and the LT bit will be set.
+
+    DivM
+      Ins: 20, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is divided by the
+      value in register A, the result in placed in A and the remainder
+      is in register B.
+
+    DivV
+      Ins: 21, P1: n/a, P2: value
+      The value stored in P2 is divided by the value in register A. The
+      result is placed in register A and the reminader is stored in
+      register B.
+
+    MultM
+      Ins: 22, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is multiplied by the
+      value in register A, the result in placed in AB.
+
+    MultV
+      Ins: 23, P1: n/a, P2: value
+      The value stored in P2 is multiplied by the value in register A.
+      The result is placed in register AB.
+
+  Bit Toggling Operations
+    AndM
+      Ins: 32, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is "anded" with the
+      value in register A. The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   0
+          1   0   |   0
+          1   1   |   1
+
+    AndV
+      Ins: 33, P1: offset, P2: value
+      The value stored in P2 is "anded" with the value in register A. 
+      The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   0
+          1   0   |   0
+          1   1   |   1
+
+    OrM
+      Ins: 34, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is "ored" with the
+      value in register A. The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   1
+          1   0   |   1
+          1   1   |   1
+
+    OrV
+      Ins: 35, P1: offset, P2: value
+      The value stored in P2  is "ored" with the
+      value in register A. The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   1
+          1   0   |   1
+          1   1   |   1
+
+    Not
+      Ins: 36, P1: n/a, P2: n/a
+      The value stored in register A is "Noted". The result is stored in
+      register A.
+          A | O
+          --+--
+          0 | 1
+          1 | 0
+
+    XorM
+      Ins: 37, P1: offset, P2: address
+      The value stored in memory location P2 + P1 is "Xored" with the
+      value in register A. The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   1
+          1   0   |   1
+          1   1   |   0
+
+    XorV
+      Ins: 38, P1: offset, P2: value
+      The value stored in P2 is "Xored" with the
+      value in register A. The result is stored in register A.
+          A   B   |   O
+          --------+----
+          0   0   |   0
+          0   1   |   1
+          1   0   |   1
+          1   1   |   0
+
+    SftL
+      Ins: 39, P1: offset, P2: n/a
+      The value stored in register A is shifted left P1 number of bits.
+      Zeros are inserted in the right, and the least significant bits are
+      discarded. The result is stored in register A.
+
+    SftLC
+      Ins: 40, P1: offset, P2: n/a
+      The value stored in register A is shifted left P1 number of bits.
+      The LSB is reinserted in the MSB. The result is stored in register
+      A.
+
+    SftR
+      Ins: 41, P1: offset, P2: n/a
+      The value stored in register A is shifted right P1 number of bits.
+      Zeros are inserted in the left, and the most significant bits are
+      discarded. The result is stored in register A.
+
+    SftRC
+      Ins: 42, P1: offset, P2: n/a
+      The value stored in register A is shifted right P1 number of bits.
+      The MSB is reinserted in the LSB. The result is stored in register
+      A.
+
+  Comparison Operations
+    Clr
+      Ins: 48, P1: n/a, P2: n/a
+      All three flags are cleared.
+
+    Cmp
+      Ins: 49, P1: n/a, P2: n/a
+      The flags are set by compairing the value in Register A to 0.
+
+    JmpGT
+      Ins: 50, P1: n/a, P2: address.
+      If the greater than flag is set, set the program counter to the
+      address in P2. The current value in the program counter is stored
+      in register J.
+
+    JmpET
+      Ins: 51, P1: n/a, P2: address.
+      If the equal to flag is set, set the program counter to the
+      address in P2. The current value in the program counter is stored
+      in register J.
+
+    JmpLT
+      Ins: 52, P1: n/a, P2: address.
+      If the less than flag is set, set the program counter to the
+      address in P2. The current value in the program counter is stored
+      in register J.
+
+    Jmp
+      Ins: 53, P1: n/a, P2: address.
+      Set the program counter to the address in P2. The current value in
+      the program counter is stored in register J.
+
+    Rtn
+      Ins: 54, P1: n/a, P2: n/a
+      Interchange the value in the program counter with that in register
+      J.
+
+  Block Device Operations
+    IOClr
+      Ins: 64, P1: {device number}, P2: n/a
+      Clear device buffer, and flags
+      
+    IOCpy
+      Ins: 65, P1: {device number}, P2: address
+      Send data to/from buffer pointed to by P2 to the hardware device 
+      buffer. If outputing, the hardware stops copying data when it 
+      encounters a null symbol or the hardware buffer overflows. If 
+      inputing, the hardware will pad the memory buffer with null 
+      characters. To be the most safe, you should wait until the output 
+      buffer is empty before sending data, and use an application buffer 
+      no longer than the hardware buffer.
+      
+    IOHlt
+      Ins: 66, P1: {device number}, P2: n/a
+      Halt execution until hardware buffer is clear.
+
+    IOJmp
+      Ins: 67, P1: {device number}, P2: address
+      If the device overflow flag is set, set the program counter to the
+      address in P2. The current value in the program counter is stored
+      in register J. The flag will be cleared.

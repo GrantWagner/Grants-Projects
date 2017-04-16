@@ -1,12 +1,14 @@
 /*
  * 
- * Matrix layout:
+ * IO layout:
  *  * strobe rows, pins 0 - 4
  *  * capslock led pin 5
- *  * sample columns, pins 6-12
+ *  * function led pin 6
+ *  * function key pin 7
+ *  * sample columns, pins 8-15
  * 
  * ┌──┬─────┬───┬───┬─────┬──────┬─────┬─────┬────┐
- * │  │6    │7  │8  │9    │10    │11   │12   │13  │
+ * │  │8    │9  │10 │11   │12    │13   │14   │15  │
  * ├──┼─────┼───┼───┼─────┼──────┼─────┼─────┼────┤
  * │0 │6    │7  │8  │9    │0     │MINUS│EQUAL│BKSP│
  * ├──┼─────┼───┼───┼─────┼──────┼─────┼─────┼────┤
@@ -19,25 +21,44 @@
  * │4 │SPACE│GUI│ALT│CTRL │FN    │     │     │    │ 
  * └──┴─────┴───┴───┴─────┴──────┴─────┴─────┴────┘
  */
+#include <Bounce.h>
 
 //#define TESTING
 
-#define KEY_NONE 0
-const int PACKET_MAX = 6;
+//KEYBOARD STATE SUPPORT
+const int STATE_MAX = 2;
+
+//KEYBOARD ROW SCAN
 const int ROW_MAX = 5;
 const int COLUMN_MAX = 8;
-const int ROW_OFFSET = 0;
-const int COLUMN_OFFSET = 6;
+const int PACKET_MAX = 6;
 
+//IO DEFINIONS
+const int ROW_OFFSET = 0;
+const int COLUMN_OFFSET = 8;
+const int CAPSLOCK_LED_PIN = 5;
+const int FUNCTION_LED_PIN = 6;
+const int FUNCTION_KEY_PIN = 7;
+
+//Global State Vars
+int stateCurrent = 0;
+Bounce fnKey = Bounce( FUNCTION_KEY_PIN,10 ); 
 
 //key constants are from /arduino-1.8.1/hardware/teensy/avr/cores/teensy/keylayouts.h
-int keysMapVal[ROW_MAX][COLUMN_MAX] = {
-  { KEY_6,     KEY_7,    KEY_8,    KEY_9,     KEY_0,         KEY_MINUS,      KEY_EQUAL,       KEY_BACKSPACE },
-  { KEY_Y,     KEY_U,    KEY_I,    KEY_O,     KEY_P,         KEY_LEFT_BRACE, KEY_RIGHT_BRACE, KEY_BACKSLASH },
-  { KEY_H,     KEY_J,    KEY_K,    KEY_L,     KEY_SEMICOLON, KEY_QUOTE,      KEY_ENTER,       KEY_NONE },
-  { KEY_B,     KEY_N,    KEY_M,    KEY_COMMA, KEY_PERIOD,    KEY_SLASH,      KEY_NONE,        KEY_NONE },
-  { KEY_SPACE, KEY_NONE, KEY_NONE, KEY_NONE,  KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE }
-};
+const int KEY_NONE = 0;
+int keysMapVal[STATE_MAX][ROW_MAX][COLUMN_MAX] = {{
+  { KEY_6,     KEY_7,    KEY_8,         KEY_9,     KEY_0,         KEY_MINUS,      KEY_EQUAL,       KEY_BACKSPACE },
+  { KEY_Y,     KEY_U,    KEY_I,         KEY_O,     KEY_P,         KEY_LEFT_BRACE, KEY_RIGHT_BRACE, KEY_BACKSLASH },
+  { KEY_H,     KEY_J,    KEY_K,         KEY_L,     KEY_SEMICOLON, KEY_QUOTE,      KEY_ENTER,       KEY_NONE },
+  { KEY_B,     KEY_N,    KEY_M,         KEY_COMMA, KEY_PERIOD,    KEY_SLASH,      KEY_NONE,        KEY_NONE },
+  { KEY_SPACE, KEY_NONE, KEY_NONE,      KEY_NONE,  KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE }
+}, {
+  { KEY_F6,    KEY_F7,   KEY_F8,        KEY_F9,    KEY_F10,       KEY_F11,        KEY_F12,         KEY_DELETE },
+  { KEY_NONE,  KEY_NONE, KEY_PAGE_UP,   KEY_NONE,  KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE },
+  { KEY_NONE,  KEY_HOME, KEY_PAGE_DOWN, KEY_END,   KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE },
+  { KEY_NONE,  KEY_NONE, KEY_NONE,      KEY_NONE,  KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE },
+  { KEY_NONE,  KEY_NONE, KEY_NONE,      KEY_NONE,  KEY_NONE,      KEY_NONE,       KEY_NONE,        KEY_NONE }
+}};
 int keysMapMod[ROW_MAX][COLUMN_MAX] = {
   { KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE },
   { KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE, KEY_NONE },
@@ -60,8 +81,13 @@ void setup() {
     digitalWrite(row + ROW_OFFSET, LOW); 
   }
 
-  pinMode(5, OUTPUT);      
-  digitalWrite(5, LOW); 
+  pinMode(CAPSLOCK_LED_PIN, OUTPUT);      
+  digitalWrite(CAPSLOCK_LED_PIN, LOW); 
+
+  pinMode(FUNCTION_LED_PIN, OUTPUT);      
+  digitalWrite(FUNCTION_LED_PIN, LOW); 
+
+  pinMode(FUNCTION_KEY_PIN, INPUT);
 
   for ( int col = 0; col < COLUMN_MAX; col++) {
     pinMode(col + COLUMN_OFFSET, INPUT);
@@ -70,9 +96,57 @@ void setup() {
 
 void loop() {
   int keys[PACKET_MAX] = {0};
-  int keyIndex = 0;
   int keyMod = 0;
-  
+
+  updateFunctionSet();
+  updateCapsLockLED();
+  scanKeys(keys, keyMod );
+  sendPacket(keys, keyMod);
+}
+
+void updateFunctionSet() {
+  fnKey.update();
+  if ( fnKey.risingEdge()) {
+
+    if (stateCurrent < STATE_MAX) {
+      stateCurrent ++;
+      digitalWrite(FUNCTION_LED_PIN, HIGH);
+    } else {
+      stateCurrent = 0;
+      digitalWrite(FUNCTION_LED_PIN, LOW);
+    }
+
+    #ifdef TESTING
+      Serial.print("Updated keyboard state: ");
+      Serial.print(stateCurrent);
+      Serial.println(".");
+    #endif
+  }
+}
+ 
+void updateCapsLockLED() {
+  #ifdef TESTING
+    Serial.print("Keyboard Led register: ");
+    Serial.print(keyboard_leds;
+    Serial.println(".");
+  #endif
+
+  if ( ( keyboard_leds & 2) == 0 ) {
+    #ifdef TESTING
+      Serial.println("Setting Capslock to off.");
+    #endif
+    digitalWrite(CAPSLOCK_LED_PIN, LOW);
+  } else {
+    #ifdef TESTING
+      Serial.println("Setting Capslock to on.");
+    #endif
+    digitalWrite(CAPSLOCK_LED_PIN, HIGH);
+  }
+}
+
+void scanKeys(int keys[PACKET_MAX], int &keyMod ) {
+  int keyIndex = 0;
+
   for( int row = 0; row < ROW_MAX; row++) {
     int rowPin = row + ROW_OFFSET;
     #ifdef TESTING
@@ -100,7 +174,7 @@ void loop() {
       if ( colVal != 0 ) {
         //parse a key value
         if ( keyIndex < PACKET_MAX) {
-          keys[keyIndex] = keysMapVal[row][col];
+          keys[keyIndex] = keysMapVal[stateCurrent][row][col];
           if ( keys[keyIndex] != 0 ) {
             keyIndex++;
             #ifdef TESTING
@@ -119,23 +193,24 @@ void loop() {
     //reset the pin
     digitalWrite(rowPin, LOW); 
   }
+}
 
-  //send the packet
+void sendPacket(int keys[PACKET_MAX], int keyMod ) {
   #ifdef TESTING
     Serial.print("Sending packet: ");
-    Serial.print(keys[0]);
+    Serial.print(keys[0], HEX);
     Serial.print(", ");
-    Serial.print(keys[1]);
+    Serial.print(keys[1], HEX);
     Serial.print(", ");
-    Serial.print(keys[2]);
+    Serial.print(keys[2], HEX);
     Serial.print(", ");
-    Serial.print(keys[3]);
+    Serial.print(keys[3], HEX);
     Serial.print(", ");
-    Serial.print(keys[4]);
+    Serial.print(keys[4], HEX);
     Serial.print(", ");
-    Serial.print(keys[5]);
+    Serial.print(keys[5], HEX);
     Serial.print(", Modifier: ");
-    Serial.print(keyMod);
+    Serial.print(keyMod, HEX);
     Serial.println(".");
     delay(100);
   #else
