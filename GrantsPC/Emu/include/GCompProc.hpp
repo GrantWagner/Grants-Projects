@@ -37,7 +37,7 @@ public:
   BlockDevice devices[devicesCount];
 
   //array of function pointers, one for each
-  void (*operations[max_operations])( GCompProc &proc, uint32_t P1, uint32_t P2 );
+  void (*operations[max_operations]) ( GCompProc &proc, uint32_t P1, uint32_t P2 );
 };
 
 //more headersafeguards

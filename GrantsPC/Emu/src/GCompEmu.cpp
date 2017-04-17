@@ -2,11 +2,12 @@
 
 //needed includes
 #include "GCompProc.hpp"
+#include "Peripherals/VideoDevice.hpp"
+#include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <cstdint>
 
 //main function
 int main( int argc, char *argv[] ) {
@@ -42,12 +43,16 @@ int main( int argc, char *argv[] ) {
 
   //create the emulator
   printf( "Testing 2.\n" );
+  VideoDevice *video = new VideoDevice();
+  video->init();
   GCompProc processor = GCompProc( memory );
 
   //process until halted
   printf( "Testing 1.\n" );
-  while ( processor.ProcessInstruction() );
+  while ( processor.ProcessInstruction() ) ;
 
+  video->cleanup();
+  free( video);
   free( memory );
   return EXIT_SUCCESS;
 } // main
